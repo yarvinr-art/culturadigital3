@@ -477,7 +477,7 @@ document.addEventListener("input", e=>{
   if(e.target.matches("[data-track], #f_nombre, #f_seccion, #f_fecha")){ guardarBorrador(); actualizarProgreso(); }
 });
 document.addEventListener("change", e=>{
-  if(e.target.matches("[data-track]")){ guardarBorrador(); actualizarProgreso(); }
+  if(e.target.matches("[data-track], #f_nombre, #f_seccion, #f_fecha")){ guardarBorrador(); actualizarProgreso(); }
 });
 
 function actualizarProgreso(){
@@ -606,6 +606,12 @@ function fmtFecha(ts){
   return ts.toDate().toLocaleString("es-PE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 }
 
+function escHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function linkSeguro(u){
+  u = String(u||"").trim();
+  return /^https:\/\//i.test(u) ? u : ""; // solo enlaces https
+}
+
 function renderTabla(){
   const fs = $("filtroSeccion").value;
   const fn = $("filtroNombre").value.trim().toLowerCase();
@@ -625,12 +631,12 @@ function renderTabla(){
   }
   $("tbodyFichas").innerHTML = lista.map(f=>`
     <tr class="fila" onclick="verDetalle('${f.id}')">
-      <td><b>${f.nombre||"—"}</b></td>
-      <td>${f.seccion||"—"}</td>
+      <td><b>${escHTML(f.nombre)||"—"}</b></td>
+      <td>${escHTML(f.seccion)||"—"}</td>
       <td>${fmtFecha(f.enviado)}</td>
       <td><span class="pill ok">${puntajeAct3(f.act3||[])}</span></td>
       <td><span class="pill ok">${puntajeIngles(f)}</span></td>
-      <td>${f.act6?.link ? `<a href="${f.act6.link}" target="_blank" onclick="event.stopPropagation()">🎨 Ver</a>` : `<span class="pill warn">Pendiente</span>`}</td>
+      <td>${linkSeguro(f.act6?.link) ? `<a href="${escHTML(linkSeguro(f.act6.link))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🎨 Ver</a>` : `<span class="pill warn">Pendiente</span>`}</td>
       <td><button class="btn btn-danger" onclick="event.stopPropagation();borrarFicha('${f.id}')">🗑</button></td>
     </tr>`).join("");
 }
@@ -668,7 +674,7 @@ function verDetalle(id){
   MATCH.forEach((m,i)=>{
     const r = f.act4?.matching?.[i]||"";
     const ok = r===m.ok;
-    h += `<div class="det-a" style="margin-top:6px"><b>${m.en}</b> → ${r||"<i>sin responder</i>"} <span class="${ok?"chip-ok":"chip-bad"}">${ok?"✓":"✗ ("+m.ok+")"}</span></div>`;
+    h += `<div class="det-a" style="margin-top:6px"><b>${m.en}</b> → ${escHTML(r)||"<i>sin responder</i>"} <span class="${ok?"chip-ok":"chip-bad"}">${ok?"✓":"✗ ("+m.ok+")"}</span></div>`;
   });
   const s = f.act4?.sentences||{};
   [["Gambling can become an ___.", s.s1, "a4_s1"],["My ___ is more important than money.", s.s2, "a4_s2"],["Prevention is the best ___.", s.s3, "a4_s3"]].forEach(([q,v,k])=>{
@@ -682,8 +688,9 @@ function verDetalle(id){
     ${bloqueA("Posibles consecuencias", esc(f.act5?.q2))}
     ${bloqueA("Consejo", esc(f.act5?.q3))}</div>`;
 
+  const lnk = linkSeguro(f.act6?.link);
   h += `<div class="det-sec"><h3>6️⃣ Infografía</h3>
-    ${f.act6?.link ? `<div class="det-a">🎨 <a href="${f.act6.link}" target="_blank">${f.act6.link}</a></div>` : `<div class="det-a vacia">No entregada</div>`}</div>`;
+    ${lnk ? `<div class="det-a">🎨 <a href="${escHTML(lnk)}" target="_blank" rel="noopener">${escHTML(lnk)}</a></div>` : `<div class="det-a vacia">No entregada${f.act6?.link ? " (el enlace enviado no es válido)" : ""}</div>`}</div>`;
 
   h += `<div class="det-sec"><h3>💭 Reflexión</h3>
     ${bloqueA("Lo más importante que aprendió", esc(f.reflexion?.q1))}
