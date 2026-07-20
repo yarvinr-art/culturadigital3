@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha digital: La ludopatía (2.°) | AIP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F4F6FB; --card:#FFFFFF; --ink:#1B1F3B; --muted:#5B6178;
+  --primary:#4338CA; --primary-soft:#EEF0FF; --accent:#F59E0B; --accent-soft:#FFF7E8;
+  --ok:#0F9D6E; --ok-soft:#E7F7F0; --danger:#DC2626; --danger-soft:#FDECEC;
+  --line:#E3E6F0; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding-bottom:70px}
+h1,h2,h3{font-family:'Sora',sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+
+/* ---------- Cabecera ---------- */
+header{background:linear-gradient(135deg,#1B1F3B 0%,#312E81 60%,#4338CA 100%);color:#fff;padding:26px 0 22px;position:relative;overflow:hidden}
+header::after{content:"🎲";position:absolute;right:-10px;top:-18px;font-size:120px;opacity:.10;transform:rotate(15deg);pointer-events:none}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;font-weight:600}
+header h1{font-size:clamp(20px,4vw,30px);margin:6px 0 4px}
+header p{opacity:.9;font-size:14px;max-width:600px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.badge{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:3px 10px;border-radius:99px;font-size:12px}
+#btnDocente{position:absolute;top:14px;right:16px;z-index:5;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 14px;border-radius:99px;font-size:13px;cursor:pointer;font-weight:600}
+#btnDocente:hover{background:rgba(255,255,255,.25)}
+
+/* ---------- Barra de progreso ---------- */
+#barraProgreso{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);padding:10px 0}
+.prog-inner{display:flex;align-items:center;gap:12px}
+.prog-track{flex:1;height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--primary));border-radius:99px;transition:width .4s}
+.prog-label{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
+
+/* ---------- Tarjetas ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin:18px 0;box-shadow:0 1px 3px rgba(27,31,59,.05)}
+.act-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.act-num{width:38px;height:38px;min-width:38px;border-radius:11px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:700;font-size:16px}
+.act-head h2{font-size:17px}
+.act-sub{color:var(--muted);font-size:13.5px;margin-bottom:14px}
+label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+label .en{color:var(--primary);font-weight:700}
+textarea,input[type=text],input[type=email],input[type=password],input[type=date],input[type=url],select{
+  width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Inter';font-size:14.5px;color:var(--ink);background:#FBFCFE;transition:border .15s}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff}
+textarea{resize:vertical;min-height:64px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:0 16px}
+@media(max-width:620px){.grid2,.grid3{grid-template-columns:1fr}}
+.lista-numerada{counter-reset:it}
+.lista-numerada .item{display:flex;gap:10px;align-items:flex-start;margin-top:8px}
+.lista-numerada .item::before{counter-increment:it;content:counter(it);min-width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:#B45309;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:7px}
+.lista-numerada input{flex:1}
+
+/* Actividad 3: conductas */
+.conducta{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:10px;cursor:pointer;transition:.15s;background:#FBFCFE}
+.conducta:hover{border-color:#C7CBE0}
+.conducta input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent)}
+.conducta.marcada{border-color:var(--accent);background:var(--accent-soft)}
+.conducta span{font-size:14.5px}
+
+/* Actividad 4 */
+.match-row{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;margin-top:10px}
+@media(max-width:520px){.match-row{grid-template-columns:1fr}}
+.match-word{font-family:'Sora';font-weight:700;color:var(--primary);background:var(--primary-soft);padding:8px 12px;border-radius:9px;text-align:center;font-size:14px}
+.word-bank{background:var(--accent-soft);border:1px dashed var(--accent);border-radius:10px;padding:10px 14px;font-size:13.5px;margin:12px 0;color:#92400E}
+
+/* Caso práctico */
+.caso{background:var(--primary-soft);border-left:4px solid var(--primary);border-radius:0 10px 10px 0;padding:14px 16px;font-size:14.5px;margin-bottom:6px}
+
+/* Autoevaluación */
+.auto-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.auto-item:last-child{border-bottom:none}
+.auto-opts{display:flex;gap:6px}
+.auto-opts button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:5px 14px;font-size:13px;cursor:pointer;font-weight:600;color:var(--muted)}
+.auto-opts button.si.sel{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.auto-opts button.no.sel{background:var(--accent-soft);border-color:var(--accent);color:#B45309}
+
+/* Botones */
+.btn{border:none;border-radius:11px;padding:13px 24px;font-family:'Inter';font-weight:700;font-size:15px;cursor:pointer;transition:.15s}
+.btn-primary{background:var(--primary);color:#fff;width:100%}
+.btn-primary:hover{background:#3730A3}
+.btn-primary:disabled{background:#A5A9C5;cursor:not-allowed}
+.btn-sec{background:#fff;border:1.5px solid var(--line);color:var(--ink);font-size:13.5px;padding:8px 14px}
+.btn-sec:hover{border-color:var(--primary);color:var(--primary)}
+.btn-danger{background:var(--danger-soft);color:var(--danger);font-size:13px;padding:7px 12px}
+.aviso-borrador{font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(20,22,45,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-bg.abierto{display:flex}
+.modal{background:#fff;border-radius:16px;padding:26px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{margin-bottom:4px}
+.modal p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
+
+/* Toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:99px;font-size:14px;font-weight:600;transition:.3s;z-index:200;opacity:0}
+#toast.ver{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ---------- Panel docente ---------- */
+#vistaDocente{display:none}
+.panel-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
+.panel-top h2{font-size:19px}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filtros select,.filtros input{width:auto;min-width:140px;padding:8px 10px;font-size:13.5px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:14px 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .n{font-family:'Sora';font-size:26px;font-weight:800;color:var(--primary)}
+.stat .l{font-size:12.5px;color:var(--muted);font-weight:600}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:14px}
+th{background:var(--primary-soft);color:var(--primary);text-align:left;padding:10px 12px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:10px 12px;border-top:1px solid var(--line)}
+tr.fila:hover{background:#F8F9FE;cursor:pointer}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--accent-soft);color:#B45309}
+.tabla-scroll{overflow-x:auto;border-radius:12px}
+
+/* Detalle */
+#detalle{display:none}
+.det-sec{margin-top:16px}
+.det-sec h3{font-size:15px;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.det-q{font-size:13px;font-weight:700;color:var(--muted);margin-top:10px}
+.det-a{font-size:14.5px;background:#F8F9FE;border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-top:3px;white-space:pre-wrap}
+.det-a.vacia{color:#A0A4BC;font-style:italic}
+.chip-ok{color:var(--ok);font-weight:700}
+.chip-bad{color:var(--danger);font-weight:700}
+footer{text-align:center;color:var(--muted);font-size:12.5px;padding:26px 0 10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Aula de Innovación Pedagógica · Hoja de trabajo digital</div>
+    <h1>La ludopatía: una adicción que debemos prevenir</h1>
+    <p>Investiga, analiza y propone acciones de prevención usando herramientas digitales, con vocabulario básico en inglés.</p>
+    <div class="badges">
+      <span class="badge">Tutoría</span><span class="badge">Competencia 28 · Cultura Digital</span><span class="badge">Inglés</span><span class="badge">2.° Secundaria</span>
+    </div>
+  </div>
+  <button id="btnDocente" onclick="abrirLoginDocente()">👨‍🏫 Docente</button>
+</header>
+
+<!-- ================= VISTA ESTUDIANTE ================= -->
+<div id="vistaEstudiante">
+
+<div id="barraProgreso">
+  <div class="wrap prog-inner">
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-label" id="progLabel">0% completado</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Datos -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">👤</div><h2>Mis datos</h2></div>
+    <div class="grid3">
+      <div><label>Apellidos y nombres</label><input type="text" id="f_nombre" placeholder="Ej.: Quispe Rojas, Ana"></div>
+      <div><label>Grado y sección</label>
+        <select id="f_seccion">
+          <option value="">Selecciona…</option>
+          <option>2° A</option><option>2° B</option><option>2° C</option><option>2° D</option><option>2° E</option><option>2° F</option>
+        </select>
+      </div>
+      <div><label>Fecha</label><input type="date" id="f_fecha"></div>
+    </div>
+  </div>
+
+  <!-- Actividad 1 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">1</div><h2>¿Qué sabes sobre la ludopatía?</h2></div>
+    <div class="act-sub">Responde con tus propias palabras, sin buscar en internet todavía.</div>
+    <label>1. ¿Qué entiendes por ludopatía?</label>
+    <textarea id="a1_q1" data-track></textarea>
+    <label>2. ¿Conoces algún juego o aplicación donde se apueste dinero? Escribe ejemplos.</label>
+    <textarea id="a1_q2" data-track></textarea>
+  </div>
+
+  <!-- Actividad 2 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">2</div><h2>Investiga en internet</h2></div>
+    <div class="act-sub">Usa el navegador y busca información en páginas confiables (MINSA, OMS, MINEDU, universidades).</div>
+    <label>¿Qué es la ludopatía?</label>
+    <textarea id="a2_def" data-track></textarea>
+    <label>Escribe tres causas.</label>
+    <div class="lista-numerada">
+      <div class="item"><input type="text" id="a2_c1" data-track></div>
+      <div class="item"><input type="text" id="a2_c2" data-track></div>
+      <div class="item"><input type="text" id="a2_c3" data-track></div>
+    </div>
+    <label>Escribe tres consecuencias.</label>
+    <div class="lista-numerada">
+      <div class="item"><input type="text" id="a2_q1" data-track></div>
+      <div class="item"><input type="text" id="a2_q2" data-track></div>
+      <div class="item"><input type="text" id="a2_q3" data-track></div>
+    </div>
+    <label>Escribe tres formas de prevenir la ludopatía.</label>
+    <div class="lista-numerada">
+      <div class="item"><input type="text" id="a2_p1" data-track></div>
+      <div class="item"><input type="text" id="a2_p2" data-track></div>
+      <div class="item"><input type="text" id="a2_p3" data-track></div>
+    </div>
+  </div>
+
+  <!-- Actividad 3 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">3</div><h2>Analiza las situaciones</h2></div>
+    <div class="act-sub">Marca las conductas que pueden indicar una posible ludopatía.</div>
+    <div id="conductas"></div>
+  </div>
+
+  <!-- Actividad 4 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">4</div><h2>English time! <span style="font-size:13px;color:var(--muted);font-weight:400">(Vocabulary)</span></h2></div>
+    <div class="act-sub">Relaciona cada palabra en inglés con su significado en español.</div>
+    <div id="matching"></div>
+    <label style="margin-top:20px">Complete the sentences.</label>
+    <div class="word-bank">💡 <b>Word bank:</b> addiction · family</div>
+    <div class="match-row"><div class="match-word" style="background:var(--accent-soft);color:#B45309">Sentence 1</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:14px">Gambling can become an</span><input type="text" id="a4_s1" data-track style="width:150px;flex:none"><span>.</span></div></div>
+    <div class="match-row"><div class="match-word" style="background:var(--accent-soft);color:#B45309">Sentence 2</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:14px">My</span><input type="text" id="a4_s2" data-track style="width:150px;flex:none"><span style="font-size:14px">is more important than money.</span></div></div>
+  </div>
+
+  <!-- Actividad 5 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">5</div><h2>Caso práctico</h2></div>
+    <div class="caso"><b>Luis tiene 14 años.</b> Empezó a apostar en partidos de fútbol desde su celular. Perdió todo su dinero y ahora ha bajado sus notas en el colegio.</div>
+    <label>¿Qué problemas presenta Luis?</label>
+    <textarea id="a5_q1" data-track></textarea>
+    <label>¿Qué consejo le darías?</label>
+    <textarea id="a5_q2" data-track></textarea>
+  </div>
+
+  <!-- Actividad 6 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">6</div><h2>Crea una infografía en Canva</h2></div>
+    <div class="act-sub">Título: <b>“NO DEJES QUE LAS APUESTAS CONTROLEN TU VIDA”</b>. Debe incluir: qué es la ludopatía, dos riesgos, dos formas de prevenirla y una frase en inglés (ej.: <i>Say NO to Gambling</i>).</div>
+    <label>Pega aquí el enlace de tu infografía de Canva 🔗</label>
+    <input type="url" id="a6_link" data-track placeholder="https://www.canva.com/design/...">
+    <div class="aviso-borrador" style="text-align:left;margin-top:6px">En Canva: <b>Compartir → Copiar enlace</b> (verifica que el enlace sea público o visible con el enlace).</div>
+  </div>
+
+  <!-- Reflexión -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">💭</div><h2>Reflexión</h2></div>
+    <label>¿Qué fue lo más importante que aprendiste hoy?</label>
+    <textarea id="r_q1" data-track></textarea>
+    <label>Escribe un compromiso personal para prevenir la ludopatía.</label>
+    <textarea id="r_q2" data-track></textarea>
+  </div>
+
+  <!-- Autoevaluación -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">✅</div><h2>Autoevaluación</h2></div>
+    <div id="autoeval"></div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg,#312E81,#4338CA);border:none">
+    <button class="btn btn-primary" id="btnEnviar" style="background:#fff;color:var(--primary)" onclick="enviarFicha()">📤 Enviar mi hoja de trabajo</button>
+    <div class="aviso-borrador" style="color:rgba(255,255,255,.85)">Tus respuestas se guardan automáticamente como borrador en este dispositivo. Solo se envían al docente cuando presionas el botón.</div>
+  </div>
+</div>
+</div>
+
+<!-- ================= VISTA DOCENTE ================= -->
+<div id="vistaDocente">
+<div class="wrap">
+  <div class="panel-top">
+    <h2>📊 Panel del docente</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sec" onclick="exportarExcel()">⬇️ Exportar Excel</button>
+      <button class="btn btn-sec" onclick="cerrarSesionDocente()">Salir</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Fichas recibidas</div></div>
+    <div class="stat"><div class="n" id="stHoy">0</div><div class="l">Enviadas hoy</div></div>
+    <div class="stat"><div class="n" id="stInfo">0</div><div class="l">Con infografía</div></div>
+  </div>
+
+  <div class="filtros" style="margin-bottom:12px">
+    <select id="filtroSeccion" onchange="renderTabla()">
+      <option value="">Todas las secciones</option>
+    </select>
+    <input type="text" id="filtroNombre" placeholder="Buscar estudiante…" oninput="renderTabla()">
+    <button class="btn btn-sec" onclick="cargarFichas()">🔄 Actualizar</button>
+  </div>
+
+  <div class="tabla-scroll">
+  <table>
+    <thead><tr><th>Estudiante</th><th>Sección</th><th>Enviado</th><th>Act. 3</th><th>Inglés</th><th>Infografía</th><th></th></tr></thead>
+    <tbody id="tbodyFichas"><tr><td colspan="7" style="text-align:center;color:var(--muted)">Cargando…</td></tr></tbody>
+  </table>
+  </div>
+
+  <!-- Detalle -->
+  <div id="detalle" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h2 id="detNombre" style="font-size:18px"></h2>
+      <button class="btn btn-sec" onclick="document.getElementById('detalle').style.display='none'">✕ Cerrar</button>
+    </div>
+    <div id="detBody"></div>
+  </div>
+</div>
+</div>
+
+<!-- Modal login docente -->
+<div class="modal-bg" id="modalLogin">
+  <div class="modal">
+    <h3>Acceso docente</h3>
+    <p>Ingresa con tu cuenta autorizada para ver las hojas de trabajo de los estudiantes.</p>
+    <label>Correo</label><input type="email" id="logEmail" autocomplete="username">
+    <label>Contraseña</label><input type="password" id="logPass" autocomplete="current-password">
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" style="flex:1" onclick="loginDocente()">Ingresar</button>
+      <button class="btn btn-sec" onclick="document.getElementById('modalLogin').classList.remove('abierto')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<footer>IE N° 0148 · Aula de Innovación Pedagógica · Ficha digital elaborada por el docente de innovación</footer>
+
+<script>
+/* ============================================================
+   1) CONFIGURACIÓN DE FIREBASE  →  PEGA AQUÍ TU CONFIG
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDdMTM-iHQmXeyPWc2hM7Pat-VCgZD7Gv4",
+  authDomain: "practica-2994b.firebaseapp.com",
+  projectId: "practica-2994b",
+  storageBucket: "practica-2994b.firebasestorage.app",
+  messagingSenderId: "460468749158",
+  appId: "1:460468749158:web:c9aca33d5b348fac11bea7"
+};
+const COLECCION = "fichas_ludopatia_2do"; // nombre de la colección en Firestore
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+/* ============================================================
+   2) DATOS DE LA FICHA
+   ============================================================ */
+const CONDUCTAS = [
+  {t:"Apuesta todos los días.", riesgo:true},
+  {t:"Juega únicamente por diversión y sabe cuándo detenerse.", riesgo:false},
+  {t:"Pide dinero prestado para seguir apostando.", riesgo:true},
+  {t:"Descuidó sus estudios por jugar.", riesgo:true},
+  {t:"Se molesta cuando pierde dinero.", riesgo:true},
+  {t:"Miente sobre el dinero que gastó.", riesgo:true},
+  {t:"Piensa constantemente en volver a apostar.", riesgo:true},
+  {t:"Comparte tiempo con su familia y practica deportes.", riesgo:false},
+];
+const MATCH = [
+  {en:"Gambling", ok:"Apuestas / juego por dinero"},
+  {en:"Addiction", ok:"Adicción"},
+  {en:"Money", ok:"Dinero"},
+  {en:"Family", ok:"Familia"},
+];
+const OPCIONES_MATCH = ["Adicción","Apuestas / juego por dinero","Dinero","Familia"];
+const SENT_OK = {a4_s1:["addiction"], a4_s2:["family"]};
+const AUTOEVAL = [
+  "Comprendí qué es la ludopatía.",
+  "Identifiqué sus riesgos.",
+  "Utilicé el vocabulario en inglés.",
+  "Elaboré mi infografía en Canva.",
+];
+
+/* ============================================================
+   3) RENDER DE COMPONENTES DINÁMICOS (vista estudiante)
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+// Conductas (Actividad 3)
+const contC = $("conductas");
+CONDUCTAS.forEach((c,i)=>{
+  const lab = document.createElement("label");
+  lab.className = "conducta";
+  lab.innerHTML = `<input type="checkbox" id="a3_${i}" data-track><span>${c.t}</span>`;
+  lab.querySelector("input").addEventListener("change", e=>{
+    lab.classList.toggle("marcada", e.target.checked);
+  });
+  contC.appendChild(lab);
+});
+
+// Matching (Actividad 4)
+const contM = $("matching");
+MATCH.forEach((m,i)=>{
+  const row = document.createElement("div");
+  row.className = "match-row";
+  row.innerHTML = `<div class="match-word">${m.en}</div>
+    <select id="a4_m${i}" data-track><option value="">Selecciona el significado…</option>
+    ${OPCIONES_MATCH.map(o=>`<option>${o}</option>`).join("")}</select>`;
+  contM.appendChild(row);
+});
+
+// Autoevaluación
+const contA = $("autoeval");
+AUTOEVAL.forEach((t,i)=>{
+  const div = document.createElement("div");
+  div.className = "auto-item";
+  div.innerHTML = `<span>${t}</span>
+    <div class="auto-opts">
+      <button class="si" onclick="setAuto(${i},'si',this)">Sí</button>
+      <button class="no" onclick="setAuto(${i},'no',this)">Aún no</button>
+    </div>`;
+  contA.appendChild(div);
+});
+const autoResp = {};
+function setAuto(i, v, btn){
+  autoResp[i] = v;
+  const opts = btn.parentElement.querySelectorAll("button");
+  opts.forEach(b=>b.classList.remove("sel"));
+  btn.classList.add("sel");
+  guardarBorrador(); actualizarProgreso();
+}
+
+// Fecha por defecto: hoy (hora de Perú)
+$("f_fecha").value = new Date(Date.now() - 5*3600*1000).toISOString().slice(0,10);
+
+/* ============================================================
+   4) BORRADOR AUTOMÁTICO (localStorage) + PROGRESO
+   ============================================================ */
+const CLAVE_BORRADOR = "borrador_ludopatia_2do_v1";
+const camposTexto = ()=>[...document.querySelectorAll("[data-track]")];
+
+function guardarBorrador(){
+  const data = {campos:{}, auto:autoResp, nombre:$("f_nombre").value, seccion:$("f_seccion").value, fecha:$("f_fecha").value};
+  camposTexto().forEach(el=>{
+    data.campos[el.id] = el.type==="checkbox" ? el.checked : el.value;
+  });
+  localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(data));
+}
+function cargarBorrador(){
+  try{
+    const raw = localStorage.getItem(CLAVE_BORRADOR); if(!raw) return;
+    const d = JSON.parse(raw);
+    $("f_nombre").value = d.nombre||""; $("f_seccion").value = d.seccion||""; if(d.fecha) $("f_fecha").value = d.fecha;
+    Object.entries(d.campos||{}).forEach(([id,v])=>{
+      const el = $(id); if(!el) return;
+      if(el.type==="checkbox"){ el.checked = v; el.closest(".conducta")?.classList.toggle("marcada", v); }
+      else el.value = v;
+    });
+    Object.entries(d.auto||{}).forEach(([i,v])=>{
+      autoResp[i]=v;
+      const item = contA.children[i];
+      item?.querySelector(v==="si"?".si":".no")?.classList.add("sel");
+    });
+  }catch(e){}
+}
+document.addEventListener("input", e=>{
+  if(e.target.matches("[data-track], #f_nombre, #f_seccion, #f_fecha")){ guardarBorrador(); actualizarProgreso(); }
+});
+document.addEventListener("change", e=>{
+  if(e.target.matches("[data-track], #f_nombre, #f_seccion, #f_fecha")){ guardarBorrador(); actualizarProgreso(); }
+});
+
+function actualizarProgreso(){
+  const textos = camposTexto().filter(el=>el.type!=="checkbox");
+  const llenos = textos.filter(el=>el.value.trim()!=="").length;
+  const autoHechas = Object.keys(autoResp).length;
+  const total = textos.length + AUTOEVAL.length + 2; // + nombre y sección
+  let n = llenos + autoHechas;
+  if($("f_nombre").value.trim()) n++;
+  if($("f_seccion").value) n++;
+  const pct = Math.round(n/total*100);
+  $("progFill").style.width = pct+"%";
+  $("progLabel").textContent = pct+"% completado";
+}
+cargarBorrador(); actualizarProgreso();
+
+/* ============================================================
+   5) ENVÍO A FIRESTORE (estudiante)
+   ============================================================ */
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("ver");
+  setTimeout(()=>t.classList.remove("ver"), 3200);
+}
+
+async function enviarFicha(){
+  const nombre = $("f_nombre").value.trim();
+  const seccion = $("f_seccion").value;
+  if(!nombre || !seccion){ toast("⚠️ Escribe tu nombre y elige tu sección"); window.scrollTo({top:0,behavior:"smooth"}); return; }
+
+  const btn = $("btnEnviar");
+  btn.disabled = true; btn.textContent = "Enviando…";
+
+  try{
+    if(!auth.currentUser) await auth.signInAnonymously();
+
+    const ficha = {
+      nombre, seccion,
+      fecha: $("f_fecha").value,
+      enviado: firebase.firestore.FieldValue.serverTimestamp(),
+      act1: {q1:$("a1_q1").value, q2:$("a1_q2").value},
+      act2: {
+        def:$("a2_def").value,
+        causas:[$("a2_c1").value,$("a2_c2").value,$("a2_c3").value],
+        consecuencias:[$("a2_q1").value,$("a2_q2").value,$("a2_q3").value],
+        prevencion:[$("a2_p1").value,$("a2_p2").value,$("a2_p3").value],
+      },
+      act3: CONDUCTAS.map((c,i)=>$("a3_"+i).checked),
+      act4: {
+        matching: MATCH.map((m,i)=>$("a4_m"+i).value),
+        sentences: {s1:$("a4_s1").value, s2:$("a4_s2").value},
+      },
+      act5: {q1:$("a5_q1").value, q2:$("a5_q2").value},
+      act6: {link:$("a6_link").value.trim()},
+      reflexion: {q1:$("r_q1").value, q2:$("r_q2").value},
+      autoevaluacion: AUTOEVAL.map((t,i)=>({criterio:t, respuesta:autoResp[i]||"sin responder"})),
+    };
+    await db.collection(COLECCION).add(ficha);
+    toast("✅ ¡Hoja enviada! Buen trabajo, "+nombre.split(",").pop().trim().split(" ")[0]);
+    btn.textContent = "✅ Enviada correctamente";
+  }catch(err){
+    console.error(err);
+    let msg = "❌ Error al enviar. Verifica tu conexión e intenta de nuevo.";
+    const code = (err && (err.code || err.message)) || "";
+    if(code.includes("admin-restricted-operation") || code.includes("operation-not-allowed")){
+      msg = "❌ Falta habilitar el acceso ANÓNIMO en Firebase Authentication.";
+    }else if(code.includes("permission-denied") || code.includes("Missing or insufficient")){
+      msg = "❌ Las reglas de Firestore no permiten crear. Revisa las reglas.";
+    }else if(code.includes("not-found") || code.includes("NOT_FOUND")){
+      msg = "❌ La base de datos Firestore aún no fue creada en el proyecto.";
+    }else if(code.includes("unavailable") || code.includes("network")){
+      msg = "❌ Sin conexión a internet. Intenta de nuevo.";
+    }
+    toast(msg);
+    alert(msg + "\n\nDetalle técnico: " + code);
+    btn.disabled = false; btn.textContent = "📤 Enviar mi hoja de trabajo";
+  }
+}
+
+/* ============================================================
+   6) PANEL DOCENTE
+   ============================================================ */
+let fichas = [];
+
+function abrirLoginDocente(){
+  if(auth.currentUser && !auth.currentUser.isAnonymous){ mostrarPanel(); return; }
+  $("modalLogin").classList.add("abierto");
+}
+async function loginDocente(){
+  const email = $("logEmail").value.trim(), pass = $("logPass").value;
+  if(!email || !pass){ toast("⚠️ Escribe correo y contraseña"); return; }
+  try{
+    await auth.signInWithEmailAndPassword(email, pass);
+    $("modalLogin").classList.remove("abierto");
+    mostrarPanel();
+  }catch(e){
+    console.error(e);
+    const code = (e && e.code) || "";
+    let msg = "❌ No se pudo iniciar sesión.";
+    if(code.includes("operation-not-allowed")) msg = "❌ Falta habilitar Correo/contraseña en Authentication.";
+    else if(code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) msg = "❌ Correo o contraseña incorrectos.";
+    else if(code.includes("invalid-email")) msg = "❌ El correo no tiene formato válido.";
+    else if(code.includes("too-many-requests")) msg = "❌ Demasiados intentos. Espera unos minutos.";
+    else if(code.includes("network")) msg = "❌ Sin conexión a internet.";
+    toast(msg);
+    alert(msg + "\n\nDetalle técnico: " + code);
+  }
+}
+// Permitir ingresar con Enter desde el modal
+["logEmail","logPass"].forEach(id=>{
+  $(id).addEventListener("keydown", e=>{ if(e.key==="Enter") loginDocente(); });
+});
+function cerrarSesionDocente(){
+  auth.signOut();
+  $("vistaDocente").style.display = "none";
+  $("vistaEstudiante").style.display = "block";
+}
+function mostrarPanel(){
+  $("vistaEstudiante").style.display = "none";
+  $("vistaDocente").style.display = "block";
+  cargarFichas();
+}
+
+async function cargarFichas(){
+  $("tbodyFichas").innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted)">Cargando…</td></tr>`;
+  try{
+    const snap = await db.collection(COLECCION).orderBy("enviado","desc").get();
+    fichas = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    // Poblar filtro de secciones
+    const secciones = [...new Set(fichas.map(f=>f.seccion))].sort();
+    $("filtroSeccion").innerHTML = `<option value="">Todas las secciones</option>` + secciones.map(s=>`<option>${s}</option>`).join("");
+    renderTabla();
+  }catch(e){
+    console.error(e);
+    $("tbodyFichas").innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger)">Sin permiso para leer. Verifica las reglas de Firestore y tu sesión de docente.</td></tr>`;
+  }
+}
+
+function puntajeAct3(marcas){
+  // correcta = riesgo marcado O no-riesgo sin marcar
+  let ok = 0;
+  CONDUCTAS.forEach((c,i)=>{ if(!!marcas[i] === c.riesgo) ok++; });
+  return ok + "/" + CONDUCTAS.length;
+}
+function puntajeIngles(f){
+  let ok = 0, total = MATCH.length + 2;
+  MATCH.forEach((m,i)=>{ if((f.act4?.matching?.[i]||"") === m.ok) ok++; });
+  const s = f.act4?.sentences||{};
+  [["a4_s1",s.s1],["a4_s2",s.s2]].forEach(([k,v])=>{
+    if(SENT_OK[k].includes((v||"").trim().toLowerCase())) ok++;
+  });
+  return ok + "/" + total;
+}
+function fmtFecha(ts){
+  if(!ts?.toDate) return "—";
+  return ts.toDate().toLocaleString("es-PE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+function escHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function linkSeguro(u){
+  u = String(u||"").trim();
+  return /^https:\/\//i.test(u) ? u : ""; // solo enlaces https
+}
+
+function renderTabla(){
+  const fs = $("filtroSeccion").value;
+  const fn = $("filtroNombre").value.trim().toLowerCase();
+  const lista = fichas.filter(f =>
+    (!fs || f.seccion===fs) && (!fn || (f.nombre||"").toLowerCase().includes(fn))
+  );
+
+  // stats
+  $("stTotal").textContent = fichas.length;
+  const hoy = new Date().toDateString();
+  $("stHoy").textContent = fichas.filter(f=>f.enviado?.toDate && f.enviado.toDate().toDateString()===hoy).length;
+  $("stInfo").textContent = fichas.filter(f=>f.act6?.link).length;
+
+  if(!lista.length){
+    $("tbodyFichas").innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted)">No hay fichas para mostrar.</td></tr>`;
+    return;
+  }
+  $("tbodyFichas").innerHTML = lista.map(f=>`
+    <tr class="fila" onclick="verDetalle('${f.id}')">
+      <td><b>${escHTML(f.nombre)||"—"}</b></td>
+      <td>${escHTML(f.seccion)||"—"}</td>
+      <td>${fmtFecha(f.enviado)}</td>
+      <td><span class="pill ok">${puntajeAct3(f.act3||[])}</span></td>
+      <td><span class="pill ok">${puntajeIngles(f)}</span></td>
+      <td>${linkSeguro(f.act6?.link) ? `<a href="${escHTML(linkSeguro(f.act6.link))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🎨 Ver</a>` : `<span class="pill warn">Pendiente</span>`}</td>
+      <td><button class="btn btn-danger" onclick="event.stopPropagation();borrarFicha('${f.id}')">🗑</button></td>
+    </tr>`).join("");
+}
+
+function esc(v){ return (v&&v.trim()) ? v.replace(/</g,"&lt;") : null; }
+function bloqueA(q, v){
+  return `<div class="det-q">${q}</div><div class="det-a ${v?"":"vacia"}">${v||"Sin respuesta"}</div>`;
+}
+
+function verDetalle(id){
+  const f = fichas.find(x=>x.id===id); if(!f) return;
+  $("detNombre").textContent = `${f.nombre} · ${f.seccion}`;
+  let h = "";
+
+  h += `<div class="det-sec"><h3>1️⃣ Saberes previos</h3>
+    ${bloqueA("¿Qué entiende por ludopatía?", esc(f.act1?.q1))}
+    ${bloqueA("Juegos o apps de apuestas que conoce", esc(f.act1?.q2))}</div>`;
+
+  h += `<div class="det-sec"><h3>2️⃣ Investigación</h3>
+    ${bloqueA("Definición", esc(f.act2?.def))}
+    ${bloqueA("Causas", esc((f.act2?.causas||[]).filter(Boolean).map((c,i)=>`${i+1}. ${c}`).join("\n")))}
+    ${bloqueA("Consecuencias", esc((f.act2?.consecuencias||[]).filter(Boolean).map((c,i)=>`${i+1}. ${c}`).join("\n")))}
+    ${bloqueA("Formas de prevención", esc((f.act2?.prevencion||[]).filter(Boolean).map((c,i)=>`${i+1}. ${c}`).join("\n")))}</div>`;
+
+  h += `<div class="det-sec"><h3>3️⃣ Conductas de riesgo <span class="pill ok">${puntajeAct3(f.act3||[])}</span></h3>`;
+  CONDUCTAS.forEach((c,i)=>{
+    const marcada = !!(f.act3||[])[i];
+    const correcto = marcada === c.riesgo;
+    h += `<div class="det-a" style="margin-top:6px">${marcada?"☑":"☐"} ${c.t} <span class="${correcto?"chip-ok":"chip-bad"}">${correcto?"✓":"✗"}</span></div>`;
+  });
+  h += `</div>`;
+
+  h += `<div class="det-sec"><h3>4️⃣ Inglés <span class="pill ok">${puntajeIngles(f)}</span></h3>`;
+  MATCH.forEach((m,i)=>{
+    const r = f.act4?.matching?.[i]||"";
+    const ok = r===m.ok;
+    h += `<div class="det-a" style="margin-top:6px"><b>${m.en}</b> → ${escHTML(r)||"<i>sin responder</i>"} <span class="${ok?"chip-ok":"chip-bad"}">${ok?"✓":"✗ ("+m.ok+")"}</span></div>`;
+  });
+  const s = f.act4?.sentences||{};
+  [["Gambling can become an ___.", s.s1, "a4_s1"],["My ___ is more important than money.", s.s2, "a4_s2"]].forEach(([q,v,k])=>{
+    const ok = SENT_OK[k].includes((v||"").trim().toLowerCase());
+    h += `<div class="det-a" style="margin-top:6px">${q.replace("___", `<b>${esc(v)||"___"}</b>`)} <span class="${ok?"chip-ok":"chip-bad"}">${ok?"✓":"✗"}</span></div>`;
+  });
+  h += `</div>`;
+
+  h += `<div class="det-sec"><h3>5️⃣ Caso práctico</h3>
+    ${bloqueA("Problemas de Luis", esc(f.act5?.q1))}
+    ${bloqueA("Consejo", esc(f.act5?.q2))}</div>`;
+
+  const lnk = linkSeguro(f.act6?.link);
+  h += `<div class="det-sec"><h3>6️⃣ Infografía</h3>
+    ${lnk ? `<div class="det-a">🎨 <a href="${escHTML(lnk)}" target="_blank" rel="noopener">${escHTML(lnk)}</a></div>` : `<div class="det-a vacia">No entregada${f.act6?.link ? " (el enlace enviado no es válido)" : ""}</div>`}</div>`;
+
+  h += `<div class="det-sec"><h3>💭 Reflexión</h3>
+    ${bloqueA("Lo más importante que aprendió", esc(f.reflexion?.q1))}
+    ${bloqueA("Compromiso personal", esc(f.reflexion?.q2))}</div>`;
+
+  h += `<div class="det-sec"><h3>✅ Autoevaluación</h3>`;
+  (f.autoevaluacion||[]).forEach(a=>{
+    h += `<div class="det-a" style="margin-top:6px">${a.criterio} → <b>${a.respuesta==="si"?"Sí ✓":(a.respuesta==="no"?"Aún no":"Sin responder")}</b></div>`;
+  });
+  h += `</div>`;
+
+  $("detBody").innerHTML = h;
+  $("detalle").style.display = "block";
+  $("detalle").scrollIntoView({behavior:"smooth"});
+}
+
+async function borrarFicha(id){
+  if(!confirm("¿Eliminar esta ficha? Esta acción no se puede deshacer.")) return;
+  try{
+    await db.collection(COLECCION).doc(id).delete();
+    fichas = fichas.filter(f=>f.id!==id);
+    renderTabla();
+    toast("Ficha eliminada");
+  }catch(e){ toast("❌ No se pudo eliminar"); }
+}
+
+/* ============================================================
+   7) EXPORTAR A EXCEL
+   ============================================================ */
+function exportarExcel(){
+  if(!fichas.length){ toast("No hay fichas para exportar"); return; }
+  const filas = fichas.map(f=>({
+    "Estudiante": f.nombre, "Sección": f.seccion, "Fecha": f.fecha,
+    "Enviado": f.enviado?.toDate ? f.enviado.toDate().toLocaleString("es-PE") : "",
+    "A1: Qué entiende por ludopatía": f.act1?.q1||"", "A1: Juegos/apps que conoce": f.act1?.q2||"",
+    "A2: Definición": f.act2?.def||"",
+    "A2: Causas": (f.act2?.causas||[]).filter(Boolean).join(" | "),
+    "A2: Consecuencias": (f.act2?.consecuencias||[]).filter(Boolean).join(" | "),
+    "A2: Prevención": (f.act2?.prevencion||[]).filter(Boolean).join(" | "),
+    "A3: Puntaje conductas": puntajeAct3(f.act3||[]),
+    "A4: Puntaje inglés": puntajeIngles(f),
+    "A5: Problemas de Luis": f.act5?.q1||"", "A5: Consejo": f.act5?.q2||"",
+    "A6: Link infografía": f.act6?.link||"",
+    "Reflexión: Aprendizaje": f.reflexion?.q1||"", "Reflexión: Compromiso": f.reflexion?.q2||"",
+    "Autoevaluación": (f.autoevaluacion||[]).map(a=>`${a.criterio} ${a.respuesta==="si"?"Sí":"Aún no"}`).join(" | "),
+  }));
+  const ws = XLSX.utils.json_to_sheet(filas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Fichas");
+  XLSX.writeFile(wb, "fichas_ludopatia_2do.xlsx");
+}
+
+/* Si el docente ya tiene sesión iniciada (no anónima), no lo expulsamos.
+   OJO: los estudiantes anónimos no se ven afectados. */
+auth.onAuthStateChanged(user=>{
+  if(user && user.isAnonymous) return; // sesiones de estudiantes: ignorar
+});
+</script>
+</body>
+</html>
