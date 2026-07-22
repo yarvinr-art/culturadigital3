@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha de repaso DPCC (1.°) | AIP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F4F8F5; --card:#FFFFFF; --ink:#173325; --muted:#5B7466;
+  --primary:#047857; --primary-soft:#E6F5EF; --accent:#D97706; --accent-soft:#FEF3E2;
+  --ok:#15803D; --danger:#DC2626; --danger-soft:#FDECEC;
+  --line:#DFEAE2; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;padding-bottom:70px}
+h1,h2,h3{font-family:'Sora',sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+
+header{background:linear-gradient(135deg,#0B2E1F 0%,#065F46 55%,#047857 100%);color:#fff;padding:26px 0 22px;position:relative;overflow:hidden}
+header::after{content:"🌱";position:absolute;right:-6px;top:-16px;font-size:120px;opacity:.12;transform:rotate(10deg);pointer-events:none}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;font-weight:600}
+header h1{font-size:clamp(20px,4vw,29px);margin:6px 0 4px}
+header p{opacity:.9;font-size:14px;max-width:620px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.badge{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:3px 10px;border-radius:99px;font-size:12px}
+#btnDocente{position:absolute;top:14px;right:16px;z-index:5;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 14px;border-radius:99px;font-size:13px;cursor:pointer;font-weight:600}
+#btnDocente:hover{background:rgba(255,255,255,.25)}
+
+#barraProgreso{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);padding:10px 0}
+.prog-inner{display:flex;align-items:center;gap:12px}
+.prog-track{flex:1;height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--primary));border-radius:99px;transition:width .4s}
+.prog-label{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin:18px 0;box-shadow:0 1px 3px rgba(23,51,37,.05)}
+.act-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.act-num{width:38px;height:38px;min-width:38px;border-radius:11px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-family:'Sora';font-weight:700;font-size:15px}
+.act-head h2{font-size:17px;flex:1}
+.tiempo{background:var(--accent-soft);color:#92400E;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700}
+.act-sub{color:var(--muted);font-size:13.5px;margin-bottom:14px}
+label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+textarea,input[type=text],input[type=email],input[type=password],input[type=date],input[type=url],select{
+  width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Inter';font-size:14.5px;color:var(--ink);background:#FBFDFC;transition:border .15s}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff}
+textarea{resize:vertical;min-height:58px}
+.grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:0 16px}
+@media(max-width:620px){.grid3{grid-template-columns:1fr}}
+
+.instrucciones{background:var(--primary-soft);border-radius:11px;padding:14px 16px;font-size:13.5px;color:#065F46}
+.instrucciones div{margin:3px 0}
+
+/* Actividad 1: cuadro de temas */
+.tema-fila{border:1.5px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:12px;background:#FBFDFC}
+.tema-fila h4{font-family:'Sora';font-size:14px;color:var(--primary);margin-bottom:6px}
+.tema-campos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:620px){.tema-campos{grid-template-columns:1fr}}
+.tema-campos label{margin:0 0 4px;font-size:12.5px;color:var(--muted)}
+
+/* Subtítulos de Actividad 2 */
+.sub-bloque{font-family:'Sora';font-size:14.5px;color:var(--primary);background:var(--primary-soft);border-radius:9px;padding:8px 12px;margin-top:18px}
+
+/* Casos */
+.caso{border-radius:0 10px 10px 0;padding:13px 15px;font-size:14px;margin-top:16px}
+.caso.c1{background:var(--primary-soft);border-left:4px solid var(--primary)}
+.caso.c2{background:var(--accent-soft);border-left:4px solid var(--accent)}
+.caso.c3{background:#E8F1FB;border-left:4px solid #2563EB}
+.caso b{display:block;margin-bottom:3px}
+
+.check-lista{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.check-lista span{background:#FBFDFC;border:1px solid var(--line);border-radius:99px;padding:4px 11px}
+
+.btn{border:none;border-radius:11px;padding:13px 24px;font-family:'Inter';font-weight:700;font-size:15px;cursor:pointer;transition:.15s}
+.btn-primary{background:var(--primary);color:#fff;width:100%}
+.btn-primary:hover{background:#065F46}
+.btn-primary:disabled{background:#9DBBA9;cursor:not-allowed}
+.btn-sec{background:#fff;border:1.5px solid var(--line);color:var(--ink);font-size:13.5px;padding:8px 14px}
+.btn-sec:hover{border-color:var(--primary);color:var(--primary)}
+.btn-danger{background:var(--danger-soft);color:var(--danger);font-size:13px;padding:7px 12px}
+.aviso-borrador{font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px}
+
+.modal-bg{position:fixed;inset:0;background:rgba(11,46,31,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-bg.abierto{display:flex}
+.modal{background:#fff;border-radius:16px;padding:26px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{margin-bottom:4px}
+.modal p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:99px;font-size:14px;font-weight:600;transition:.3s;z-index:200;opacity:0}
+#toast.ver{transform:translateX(-50%) translateY(0);opacity:1}
+
+#vistaDocente{display:none}
+.panel-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
+.panel-top h2{font-size:19px}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filtros select,.filtros input{width:auto;min-width:140px;padding:8px 10px;font-size:13.5px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:14px 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat .n{font-family:'Sora';font-size:26px;font-weight:800;color:var(--primary)}
+.stat .l{font-size:12.5px;color:var(--muted);font-weight:600}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:14px}
+th{background:var(--primary-soft);color:var(--primary);text-align:left;padding:10px 12px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:10px 12px;border-top:1px solid var(--line)}
+tr.fila:hover{background:#F7FBF8;cursor:pointer}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.pill.ok{background:var(--primary-soft);color:var(--primary)}
+.pill.warn{background:var(--accent-soft);color:#92400E}
+.tabla-scroll{overflow-x:auto;border-radius:12px}
+#detalle{display:none}
+.det-sec{margin-top:16px}
+.det-sec h3{font-size:15px;color:var(--primary);margin-bottom:8px}
+.det-q{font-size:13px;font-weight:700;color:var(--muted);margin-top:10px}
+.det-a{font-size:14.5px;background:#F7FBF8;border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-top:3px;white-space:pre-wrap}
+.det-a.vacia{color:#9FB3A7;font-style:italic}
+footer{text-align:center;color:var(--muted);font-size:12.5px;padding:26px 0 10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">IE N.° 0148 "Maestro Víctor Raúl Haya de la Torre" · Ficha digital</div>
+    <h1>¡Hoy aprendo de manera autónoma! 🌱</h1>
+    <p>Repasa los contenidos del segundo periodo con actividades de investigación, análisis y reflexión usando los recursos de la sala de cómputo.</p>
+    <div class="badges">
+      <span class="badge">DPCC</span><span class="badge">1.° Secundaria</span><span class="badge">Repaso autónomo</span>
+    </div>
+  </div>
+  <button id="btnDocente" onclick="abrirLoginDocente()">👨‍🏫 Docente</button>
+</header>
+
+<!-- ================= VISTA ESTUDIANTE ================= -->
+<div id="vistaEstudiante">
+
+<div id="barraProgreso">
+  <div class="wrap prog-inner">
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-label" id="progLabel">0% completado</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Datos -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">👤</div><h2>Mis datos</h2></div>
+    <div class="grid3">
+      <div><label>Apellidos y nombres</label><input type="text" id="f_nombre" placeholder="Ej.: Quispe Rojas, Ana"></div>
+      <div><label>Sección</label>
+        <select id="f_seccion">
+          <option value="">Selecciona…</option>
+          <option>1° A</option><option>1° B</option><option>1° C</option><option>1° D</option><option>1° E</option><option>1° F</option>
+        </select>
+      </div>
+      <div><label>Fecha</label><input type="date" id="f_fecha"></div>
+    </div>
+    <div class="instrucciones" style="margin-top:16px">
+      <b>📋 Instrucciones</b>
+      <div>✔ Trabaja de manera individual y lee atentamente cada actividad.</div>
+      <div>✔ Usa únicamente páginas educativas y oficiales (MINEDU, Constitución Política, Ministerio del Ambiente, Ministerio de Cultura).</div>
+      <div>✔ Guarda respeto y orden durante toda la clase.</div>
+    </div>
+  </div>
+
+  <!-- ACTIVIDAD 1 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">1</div><h2>Recordamos lo aprendido</h2><span class="tiempo">⏱ 15 min</span></div>
+    <div class="act-sub">Completa el cuadro con lo que recuerdas de cada tema y un ejemplo.</div>
+    <div id="temas"></div>
+  </div>
+
+  <!-- ACTIVIDAD 2 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">2</div><h2>Investigación en Internet</h2><span class="tiempo">⏱ 25 min</span></div>
+    <div class="act-sub">Busca información en páginas confiables y responde.</div>
+
+    <div class="sub-bloque">🌿 A. Valores ecológicos — Escribe el significado de cada valor</div>
+    <label>Responsabilidad</label>
+    <textarea id="a2_resp" data-track></textarea>
+    <label>Solidaridad</label>
+    <textarea id="a2_soli" data-track></textarea>
+    <label>Respeto por el ambiente</label>
+    <textarea id="a2_amb" data-track></textarea>
+
+    <div class="sub-bloque">🏛️ B. Patrimonio Cultural — Busca un ejemplo de cada tipo</div>
+    <label style="color:var(--primary)">Patrimonio material</label>
+    <label>Nombre</label>
+    <input type="text" id="a2_pm_nombre" data-track placeholder="Ej.: una fortaleza, un templo, un sitio arqueológico…">
+    <label>¿Dónde se encuentra?</label>
+    <input type="text" id="a2_pm_donde" data-track>
+    <label>¿Por qué es importante?</label>
+    <textarea id="a2_pm_imp" data-track></textarea>
+    <label style="color:var(--primary);margin-top:18px">Patrimonio inmaterial</label>
+    <label>Nombre</label>
+    <input type="text" id="a2_pi_nombre" data-track placeholder="Ej.: una danza, una festividad, una tradición…">
+    <label>¿En qué consiste?</label>
+    <textarea id="a2_pi_consiste" data-track></textarea>
+    <label>¿Por qué debemos conservarlo?</label>
+    <textarea id="a2_pi_conservar" data-track></textarea>
+  </div>
+
+  <!-- ACTIVIDAD 3 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">3</div><h2>Analizamos casos</h2><span class="tiempo">⏱ 20 min</span></div>
+    <div class="act-sub">Lee cada caso y responde.</div>
+
+    <div class="caso c1"><b>Caso 1</b>Un estudiante observa que sus compañeros botan papeles al piso durante el recreo.</div>
+    <label>¿Qué valor debería poner en práctica?</label>
+    <input type="text" id="a3_c1_valor" data-track>
+    <label>¿Qué harías tú?</label>
+    <textarea id="a3_c1_haria" data-track></textarea>
+
+    <div class="caso c2"><b>Caso 2</b>Una estudiante se avergüenza de hablar con el acento de su comunidad.</div>
+    <label>¿Por qué es importante valorar nuestra identidad?</label>
+    <textarea id="a3_c2_resp" data-track></textarea>
+
+    <div class="caso c3"><b>Caso 3</b>Un grupo propone realizar una campaña para ahorrar agua en la escuela.</div>
+    <label>¿Qué derecho están ejerciendo?</label>
+    <input type="text" id="a3_c3_derecho" data-track>
+    <label>¿Qué responsabilidad están ejerciendo?</label>
+    <input type="text" id="a3_c3_resp" data-track>
+  </div>
+
+  <!-- ACTIVIDAD 4 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">4</div><h2>Organizador gráfico digital</h2><span class="tiempo">⏱ 20 min</span></div>
+    <div class="act-sub">Elige UN tema y elabora un organizador gráfico con la herramienta que tengas disponible.</div>
+    <label>Tema elegido</label>
+    <select id="a4_tema" data-track>
+      <option value="">Selecciona tu tema…</option>
+      <option>Identidad personal e identidad cultural</option>
+      <option>Valores ecológicos</option>
+      <option>Patrimonio cultural</option>
+      <option>Estado peruano</option>
+      <option>Gobierno democrático</option>
+      <option>Derechos ambientales</option>
+    </select>
+    <label>Herramienta que usaste</label>
+    <select id="a4_herr" data-track>
+      <option value="">Selecciona…</option>
+      <option>PowerPoint</option>
+      <option>Word</option>
+      <option>Canva</option>
+      <option>Google Presentaciones</option>
+      <option>En hoja (a mano)</option>
+    </select>
+    <label>Si lo hiciste en línea, pega aquí el enlace 🔗 (opcional)</label>
+    <input type="url" id="a4_link" data-track placeholder="https://…">
+    <div class="check-lista">Tu organizador debe contener:
+      <span>✔ Definición</span><span>✔ Ideas principales</span><span>✔ Un ejemplo</span><span>✔ Una imagen</span><span>✔ Tu conclusión</span>
+    </div>
+  </div>
+
+  <!-- ACTIVIDAD 5 -->
+  <div class="card">
+    <div class="act-head"><div class="act-num">5</div><h2>Reflexiono</h2><span class="tiempo">⏱ 10 min</span></div>
+    <div class="act-sub">Responde con tus propias palabras.</div>
+    <label>¿Cuál fue el tema que más te gustó durante este periodo?</label>
+    <textarea id="a5_q1" data-track></textarea>
+    <label>¿Qué aprendiste que te servirá para tu vida?</label>
+    <textarea id="a5_q2" data-track></textarea>
+    <label>¿Qué tema necesitas seguir practicando?</label>
+    <textarea id="a5_q3" data-track></textarea>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg,#0B2E1F,#047857);border:none">
+    <button class="btn btn-primary" id="btnEnviar" style="background:#fff;color:var(--primary)" onclick="enviarFicha()">📤 Enviar mi ficha de repaso</button>
+    <div class="aviso-borrador" style="color:rgba(255,255,255,.85)">Tus respuestas se guardan automáticamente como borrador en esta computadora. Solo se envían al docente al presionar el botón.</div>
+  </div>
+</div>
+</div>
+
+<!-- ================= VISTA DOCENTE ================= -->
+<div id="vistaDocente">
+<div class="wrap">
+  <div class="panel-top">
+    <h2>📊 Panel del docente — Repaso DPCC 1.°</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sec" onclick="exportarExcel()">⬇️ Exportar Excel</button>
+      <button class="btn btn-sec" onclick="cerrarSesionDocente()">Salir</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Fichas recibidas</div></div>
+    <div class="stat"><div class="n" id="stHoy">0</div><div class="l">Enviadas hoy</div></div>
+  </div>
+
+  <div class="filtros">
+    <select id="filtroSeccion" onchange="renderTabla()"><option value="">Todas las secciones</option></select>
+    <input type="text" id="filtroNombre" placeholder="Buscar estudiante…" oninput="renderTabla()">
+    <button class="btn btn-sec" onclick="cargarFichas()">🔄 Actualizar</button>
+  </div>
+
+  <div class="tabla-scroll">
+  <table>
+    <thead><tr><th>Estudiante</th><th>Sección</th><th>Enviado</th><th>Tema del organizador</th><th>Enlace</th><th></th></tr></thead>
+    <tbody id="tbodyFichas"><tr><td colspan="6" style="text-align:center;color:var(--muted)">Cargando…</td></tr></tbody>
+  </table>
+  </div>
+
+  <div id="detalle" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h2 id="detNombre" style="font-size:18px"></h2>
+      <button class="btn btn-sec" onclick="document.getElementById('detalle').style.display='none'">✕ Cerrar</button>
+    </div>
+    <div id="detBody"></div>
+  </div>
+</div>
+</div>
+
+<!-- Modal login docente -->
+<div class="modal-bg" id="modalLogin">
+  <div class="modal">
+    <h3>Acceso docente</h3>
+    <p>Ingresa con tu cuenta autorizada para ver las fichas de los estudiantes.</p>
+    <label>Correo</label><input type="email" id="logEmail" autocomplete="username">
+    <label>Contraseña</label><input type="password" id="logPass" autocomplete="current-password">
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" style="flex:1" onclick="loginDocente()">Ingresar</button>
+      <button class="btn btn-sec" onclick="document.getElementById('modalLogin').classList.remove('abierto')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<footer>IE N.° 0148 · Aula de Innovación Pedagógica · Ficha de repaso DPCC</footer>
+
+<script>
+/* ============ CONFIGURACIÓN FIREBASE ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDdMTM-iHQmXeyPWc2hM7Pat-VCgZD7Gv4",
+  authDomain: "practica-2994b.firebaseapp.com",
+  projectId: "practica-2994b",
+  storageBucket: "practica-2994b.firebasestorage.app",
+  messagingSenderId: "460468749158",
+  appId: "1:460468749158:web:c9aca33d5b348fac11bea7"
+};
+const COLECCION = "fichas_repaso_dpcc_1ro";
+let db = null, auth = null, firebaseOk = false;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  auth = firebase.auth();
+  // Sesión solo mientras la pestaña esté abierta (computadoras compartidas del AIP)
+  auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+  firebaseOk = true;
+}catch(e){
+  console.error("Firebase no pudo cargar:", e);
+}
+
+/* ============ DATOS DE LA FICHA ============ */
+const TEMAS = [
+  "Valores ecológicos",
+  "Identidad personal",
+  "Identidad cultural",
+  "Patrimonio cultural",
+  "Estado peruano",
+  "Gobierno democrático",
+];
+
+const $ = id => document.getElementById(id);
+
+// Actividad 1: cuadro de temas
+const contT = $("temas");
+TEMAS.forEach((t,i)=>{
+  const div = document.createElement("div");
+  div.className = "tema-fila";
+  div.innerHTML = `<h4>${t}</h4>
+    <div class="tema-campos">
+      <div><label>¿Qué recuerdo?</label><textarea id="a1_r${i}" data-track></textarea></div>
+      <div><label>Ejemplo</label><textarea id="a1_e${i}" data-track></textarea></div>
+    </div>`;
+  contT.appendChild(div);
+});
+
+// Fecha por defecto (hora Perú)
+$("f_fecha").value = new Date(Date.now() - 5*3600*1000).toISOString().slice(0,10);
+
+/* ============ BORRADOR + PROGRESO ============ */
+const CLAVE_BORRADOR = "borrador_repaso_dpcc1_v1";
+const camposTexto = ()=>[...document.querySelectorAll("[data-track]")];
+
+function guardarBorrador(){
+  const data = {campos:{}, nombre:$("f_nombre").value, seccion:$("f_seccion").value, fecha:$("f_fecha").value};
+  camposTexto().forEach(el=>{ data.campos[el.id] = el.value; });
+  localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(data));
+}
+function cargarBorrador(){
+  try{
+    const raw = localStorage.getItem(CLAVE_BORRADOR); if(!raw) return;
+    const d = JSON.parse(raw);
+    $("f_nombre").value = d.nombre||""; $("f_seccion").value = d.seccion||""; if(d.fecha) $("f_fecha").value = d.fecha;
+    Object.entries(d.campos||{}).forEach(([id,v])=>{ const el = $(id); if(el) el.value = v; });
+  }catch(e){}
+}
+document.addEventListener("input", e=>{
+  if(e.target.matches("[data-track], #f_nombre, #f_seccion, #f_fecha")){ guardarBorrador(); actualizarProgreso(); }
+});
+document.addEventListener("change", e=>{
+  if(e.target.matches("[data-track], #f_nombre, #f_seccion, #f_fecha")){ guardarBorrador(); actualizarProgreso(); }
+});
+
+function actualizarProgreso(){
+  const textos = camposTexto();
+  const llenos = textos.filter(el=>el.value.trim()!=="").length;
+  const total = textos.length + 2; // + nombre y sección
+  let n = llenos;
+  if($("f_nombre").value.trim()) n++;
+  if($("f_seccion").value) n++;
+  const pct = Math.min(100, Math.round(n/total*100));
+  $("progFill").style.width = pct+"%";
+  $("progLabel").textContent = pct+"% completado";
+}
+cargarBorrador(); actualizarProgreso();
+
+/* ============ ENVÍO ============ */
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("ver");
+  setTimeout(()=>t.classList.remove("ver"), 3200);
+}
+
+async function enviarFicha(){
+  const nombre = $("f_nombre").value.trim();
+  const seccion = $("f_seccion").value;
+  if(!nombre || !seccion){ toast("⚠️ Escribe tus apellidos y nombres y elige tu sección"); window.scrollTo({top:0,behavior:"smooth"}); return; }
+
+  if(!firebaseOk){ alert("❌ No hay conexión con el servidor (Firebase no cargó). Verifica el internet y recarga la página. Tus respuestas están guardadas como borrador."); return; }
+  const btn = $("btnEnviar");
+  btn.disabled = true; btn.textContent = "Enviando…";
+  try{
+    if(!auth.currentUser) await auth.signInAnonymously();
+    const ficha = {
+      nombre, seccion,
+      fecha: $("f_fecha").value,
+      enviado: firebase.firestore.FieldValue.serverTimestamp(),
+      act1: TEMAS.map((t,i)=>({tema:t, recuerdo:$("a1_r"+i).value, ejemplo:$("a1_e"+i).value})),
+      act2: {
+        valores: {responsabilidad:$("a2_resp").value, solidaridad:$("a2_soli").value, respetoAmbiente:$("a2_amb").value},
+        patrimonioMaterial: {nombre:$("a2_pm_nombre").value, donde:$("a2_pm_donde").value, importancia:$("a2_pm_imp").value},
+        patrimonioInmaterial: {nombre:$("a2_pi_nombre").value, consiste:$("a2_pi_consiste").value, conservar:$("a2_pi_conservar").value},
+      },
+      act3: {
+        c1: {valor:$("a3_c1_valor").value, haria:$("a3_c1_haria").value},
+        c2: {respuesta:$("a3_c2_resp").value},
+        c3: {derecho:$("a3_c3_derecho").value, responsabilidad:$("a3_c3_resp").value},
+      },
+      act4: {tema:$("a4_tema").value, herramienta:$("a4_herr").value, link:$("a4_link").value.trim()},
+      act5: {q1:$("a5_q1").value, q2:$("a5_q2").value, q3:$("a5_q3").value},
+    };
+    await db.collection(COLECCION).add(ficha);
+    toast("✅ ¡Ficha enviada! Buen trabajo, " + nombre.split(",").pop().trim().split(" ")[0]);
+    btn.textContent = "✅ Enviada correctamente";
+  }catch(err){
+    console.error(err);
+    let msg = "❌ Error al enviar. Verifica tu conexión e intenta de nuevo.";
+    const code = (err && (err.code || err.message)) || "";
+    if(code.includes("admin-restricted-operation") || code.includes("operation-not-allowed")) msg = "❌ Falta habilitar el acceso ANÓNIMO en Firebase Authentication.";
+    else if(code.includes("permission-denied") || code.includes("Missing or insufficient")) msg = "❌ Las reglas de Firestore no permiten crear. Revisa las reglas.";
+    else if(code.includes("not-found") || code.includes("NOT_FOUND")) msg = "❌ La base de datos Firestore aún no fue creada en el proyecto.";
+    else if(code.includes("unavailable") || code.includes("network")) msg = "❌ Sin conexión a internet. Intenta de nuevo.";
+    toast(msg);
+    alert(msg + "\n\nDetalle técnico: " + code);
+    btn.disabled = false; btn.textContent = "📤 Enviar mi ficha de repaso";
+  }
+}
+
+/* ============ PANEL DOCENTE ============ */
+let fichas = [];
+
+function abrirLoginDocente(){
+  if(!firebaseOk){ alert("❌ No hay conexión con el servidor (Firebase no cargó). Verifica el internet y recarga la página."); return; }
+  if(auth.currentUser && !auth.currentUser.isAnonymous){ mostrarPanel(); return; }
+  $("modalLogin").classList.add("abierto");
+}
+async function loginDocente(){
+  const email = $("logEmail").value.trim(), pass = $("logPass").value;
+  if(!email || !pass){ toast("⚠️ Escribe correo y contraseña"); return; }
+  try{
+    await auth.signInWithEmailAndPassword(email, pass);
+    $("modalLogin").classList.remove("abierto");
+    mostrarPanel();
+  }catch(e){
+    console.error(e);
+    const code = (e && e.code) || "";
+    let msg = "❌ No se pudo iniciar sesión.";
+    if(code.includes("operation-not-allowed")) msg = "❌ Falta habilitar Correo/contraseña en Authentication.";
+    else if(code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) msg = "❌ Correo o contraseña incorrectos.";
+    else if(code.includes("invalid-email")) msg = "❌ El correo no tiene formato válido.";
+    else if(code.includes("too-many-requests")) msg = "❌ Demasiados intentos. Espera unos minutos.";
+    else if(code.includes("network")) msg = "❌ Sin conexión a internet.";
+    toast(msg);
+    alert(msg + "\n\nDetalle técnico: " + code);
+  }
+}
+["logEmail","logPass"].forEach(id=>{
+  $(id).addEventListener("keydown", e=>{ if(e.key==="Enter") loginDocente(); });
+});
+function cerrarSesionDocente(){
+  auth.signOut();
+  $("vistaDocente").style.display = "none";
+  $("vistaEstudiante").style.display = "block";
+}
+function mostrarPanel(){
+  $("vistaEstudiante").style.display = "none";
+  $("vistaDocente").style.display = "block";
+  cargarFichas();
+}
+
+async function cargarFichas(){
+  $("tbodyFichas").innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted)">Cargando…</td></tr>`;
+  try{
+    const snap = await db.collection(COLECCION).orderBy("enviado","desc").get();
+    fichas = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    const secciones = [...new Set(fichas.map(f=>f.seccion))].sort();
+    $("filtroSeccion").innerHTML = `<option value="">Todas las secciones</option>` + secciones.map(s=>`<option>${s}</option>`).join("");
+    renderTabla();
+  }catch(e){
+    console.error(e);
+    $("tbodyFichas").innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger)">Sin permiso para leer. Verifica las reglas de Firestore y tu sesión de docente.</td></tr>`;
+  }
+}
+
+function escHTML(v){ return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function linkSeguro(u){
+  u = String(u||"").trim();
+  return /^https:\/\//i.test(u) ? u : "";
+}
+function fmtFecha(ts){
+  if(!ts?.toDate) return "—";
+  return ts.toDate().toLocaleString("es-PE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+function renderTabla(){
+  const fs = $("filtroSeccion").value;
+  const fn = $("filtroNombre").value.trim().toLowerCase();
+  const lista = fichas.filter(f => (!fs || f.seccion===fs) && (!fn || (f.nombre||"").toLowerCase().includes(fn)));
+
+  $("stTotal").textContent = fichas.length;
+  const hoy = new Date().toDateString();
+  $("stHoy").textContent = fichas.filter(f=>f.enviado?.toDate && f.enviado.toDate().toDateString()===hoy).length;
+
+  if(!lista.length){
+    $("tbodyFichas").innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted)">No hay fichas para mostrar.</td></tr>`;
+    return;
+  }
+  $("tbodyFichas").innerHTML = lista.map(f=>`
+    <tr class="fila" onclick="verDetalle('${f.id}')">
+      <td><b>${escHTML(f.nombre)||"—"}</b></td>
+      <td>${escHTML(f.seccion)||"—"}</td>
+      <td>${fmtFecha(f.enviado)}</td>
+      <td>${escHTML(f.act4?.tema)||"<span class='pill warn'>Sin elegir</span>"}</td>
+      <td>${linkSeguro(f.act4?.link) ? `<a href="${escHTML(linkSeguro(f.act4.link))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Ver</a>` : "—"}</td>
+      <td><button class="btn btn-danger" onclick="event.stopPropagation();borrarFicha('${f.id}')">🗑</button></td>
+    </tr>`).join("");
+}
+
+function esc(v){ return (v&&v.trim()) ? escHTML(v) : null; }
+function bloqueA(q, v){
+  return `<div class="det-q">${q}</div><div class="det-a ${v?"":"vacia"}">${v||"Sin respuesta"}</div>`;
+}
+
+function verDetalle(id){
+  const f = fichas.find(x=>x.id===id); if(!f) return;
+  $("detNombre").textContent = `${f.nombre} · ${f.seccion}`;
+  let h = "";
+
+  h += `<div class="det-sec"><h3>1️⃣ Recordamos lo aprendido</h3>`;
+  (f.act1||[]).forEach(r=>{
+    h += `<div class="det-a" style="margin-top:6px"><b>${escHTML(r.tema)}</b><br>Recuerdo: ${esc(r.recuerdo)||"—"}<br>Ejemplo: ${esc(r.ejemplo)||"—"}</div>`;
+  });
+  h += `</div>`;
+
+  h += `<div class="det-sec"><h3>2️⃣ Investigación en Internet</h3>
+    ${bloqueA("Responsabilidad", esc(f.act2?.valores?.responsabilidad))}
+    ${bloqueA("Solidaridad", esc(f.act2?.valores?.solidaridad))}
+    ${bloqueA("Respeto por el ambiente", esc(f.act2?.valores?.respetoAmbiente))}
+    ${bloqueA("Patrimonio material", esc([f.act2?.patrimonioMaterial?.nombre && "Nombre: "+f.act2.patrimonioMaterial.nombre, f.act2?.patrimonioMaterial?.donde && "Ubicación: "+f.act2.patrimonioMaterial.donde, f.act2?.patrimonioMaterial?.importancia && "Importancia: "+f.act2.patrimonioMaterial.importancia].filter(Boolean).join("\n")))}
+    ${bloqueA("Patrimonio inmaterial", esc([f.act2?.patrimonioInmaterial?.nombre && "Nombre: "+f.act2.patrimonioInmaterial.nombre, f.act2?.patrimonioInmaterial?.consiste && "Consiste en: "+f.act2.patrimonioInmaterial.consiste, f.act2?.patrimonioInmaterial?.conservar && "Por qué conservarlo: "+f.act2.patrimonioInmaterial.conservar].filter(Boolean).join("\n")))}</div>`;
+
+  h += `<div class="det-sec"><h3>3️⃣ Análisis de casos</h3>
+    ${bloqueA("Caso 1 — Valor a practicar", esc(f.act3?.c1?.valor))}
+    ${bloqueA("Caso 1 — ¿Qué haría?", esc(f.act3?.c1?.haria))}
+    ${bloqueA("Caso 2 — Por qué valorar la identidad", esc(f.act3?.c2?.respuesta))}
+    ${bloqueA("Caso 3 — Derecho", esc(f.act3?.c3?.derecho))}
+    ${bloqueA("Caso 3 — Responsabilidad", esc(f.act3?.c3?.responsabilidad))}</div>`;
+
+  const lnk = linkSeguro(f.act4?.link);
+  h += `<div class="det-sec"><h3>4️⃣ Organizador gráfico</h3>
+    ${bloqueA("Tema elegido", esc(f.act4?.tema))}
+    ${bloqueA("Herramienta", esc(f.act4?.herramienta))}
+    ${lnk ? `<div class="det-q">Enlace</div><div class="det-a">🔗 <a href="${escHTML(lnk)}" target="_blank" rel="noopener">${escHTML(lnk)}</a></div>` : `<div class="det-q">Enlace</div><div class="det-a vacia">Sin enlace${f.act4?.link ? " (el enlace enviado no es válido)" : ""}</div>`}</div>`;
+
+  h += `<div class="det-sec"><h3>5️⃣ Reflexión</h3>
+    ${bloqueA("Tema que más le gustó", esc(f.act5?.q1))}
+    ${bloqueA("Qué aprendió para su vida", esc(f.act5?.q2))}
+    ${bloqueA("Tema que necesita seguir practicando", esc(f.act5?.q3))}</div>`;
+
+  $("detBody").innerHTML = h;
+  $("detalle").style.display = "block";
+  $("detalle").scrollIntoView({behavior:"smooth"});
+}
+
+async function borrarFicha(id){
+  if(!confirm("¿Eliminar esta ficha? Esta acción no se puede deshacer.")) return;
+  try{
+    await db.collection(COLECCION).doc(id).delete();
+    fichas = fichas.filter(f=>f.id!==id);
+    renderTabla();
+    toast("Ficha eliminada");
+  }catch(e){ toast("❌ No se pudo eliminar"); }
+}
+
+/* ============ EXPORTAR EXCEL ============ */
+function exportarExcel(){
+  if(!fichas.length){ toast("No hay fichas para exportar"); return; }
+  const filas = fichas.map(f=>{
+    const fila = {
+      "Estudiante": f.nombre||"", "Sección": f.seccion||"", "Fecha": f.fecha||"",
+      "Enviado": f.enviado?.toDate ? f.enviado.toDate().toLocaleString("es-PE") : "",
+    };
+    (f.act1||[]).forEach(r=>{
+      fila[`A1: ${r.tema} — Recuerdo`] = r.recuerdo||"";
+      fila[`A1: ${r.tema} — Ejemplo`] = r.ejemplo||"";
+    });
+    fila["A2: Responsabilidad"] = f.act2?.valores?.responsabilidad||"";
+    fila["A2: Solidaridad"] = f.act2?.valores?.solidaridad||"";
+    fila["A2: Respeto por el ambiente"] = f.act2?.valores?.respetoAmbiente||"";
+    fila["A2: P. material (nombre)"] = f.act2?.patrimonioMaterial?.nombre||"";
+    fila["A2: P. material (ubicación)"] = f.act2?.patrimonioMaterial?.donde||"";
+    fila["A2: P. material (importancia)"] = f.act2?.patrimonioMaterial?.importancia||"";
+    fila["A2: P. inmaterial (nombre)"] = f.act2?.patrimonioInmaterial?.nombre||"";
+    fila["A2: P. inmaterial (consiste)"] = f.act2?.patrimonioInmaterial?.consiste||"";
+    fila["A2: P. inmaterial (conservar)"] = f.act2?.patrimonioInmaterial?.conservar||"";
+    fila["A3: Caso 1 valor"] = f.act3?.c1?.valor||"";
+    fila["A3: Caso 1 qué haría"] = f.act3?.c1?.haria||"";
+    fila["A3: Caso 2 identidad"] = f.act3?.c2?.respuesta||"";
+    fila["A3: Caso 3 derecho"] = f.act3?.c3?.derecho||"";
+    fila["A3: Caso 3 responsabilidad"] = f.act3?.c3?.responsabilidad||"";
+    fila["A4: Tema"] = f.act4?.tema||"";
+    fila["A4: Herramienta"] = f.act4?.herramienta||"";
+    fila["A4: Enlace"] = f.act4?.link||"";
+    fila["A5: Tema que más gustó"] = f.act5?.q1||"";
+    fila["A5: Aprendizaje para la vida"] = f.act5?.q2||"";
+    fila["A5: Tema por practicar"] = f.act5?.q3||"";
+    return fila;
+  });
+  const ws = XLSX.utils.json_to_sheet(filas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "RepasoDPCC");
+  XLSX.writeFile(wb, "fichas_repaso_dpcc_1ro.xlsx");
+}
+</script>
+</body>
+</html>
